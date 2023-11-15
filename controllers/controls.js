@@ -1,0 +1,132 @@
+const { Cars, Risk , Quote } = require("../models");
+
+//~~~~~~~~~~~~~~~~~~~~~ GET THE CARS TABLE DATA~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+const getAllCars = async (req, res) => {
+  const listOfCars = await Cars.findAll();
+  res.json(listOfCars);
+};
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~API 1 CAR VALUE~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+const createCar = async (req, res) => {
+  try {
+    const { model, year } = req.body;
+    console.log({ model, year });
+
+    // Validate input data
+    if (!model || typeof model !== "string" || !year || isNaN(year)) {
+      return res.status(400).json({ error: "Invalid input data" });
+    }
+
+    const carValue = calculateCarValue(model, parseInt(year));
+
+    if (isNaN(carValue)) {
+      return res.status(400).json({ error: "Unable to calculate car value" });
+    }
+
+    res.send({ car_value: carValue }); 
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+function calculateCarValue(model, year) {
+  try {
+    if (typeof model !== "string" || typeof year !== "number" || isNaN(year)) {
+      throw new Error("Invalid input for calculating car value");
+    }
+
+    const cleanedModel = model.replace(/[^a-zA-Z]/g, "").toUpperCase();
+    const charValues = Array.from(cleanedModel).map((char) => char.charCodeAt(0) - 64);
+    const carValue = charValues.reduce((sum, value) => sum + value, 0) * 100 + year;
+
+    if (isNaN(carValue)) {
+      throw new Error("Unable to calculate car value");
+    }
+
+    return carValue;
+  } catch (error) {
+    console.error(error);
+    throw error; // Rethrow the error for higher-level handling
+  }
+}
+
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~API 2 RISK RATING~~~~~~~~~~~~~~~~~~~~~~~//
+
+
+const riskRating = async (req, res) => {
+  const { claim_history } = req.body;
+  if (!claim_history) {
+    return res.status(400).json({ error: "Claim history is required in the input." });
+  }
+  const calculatedRiskRating = calculateRiskRating(claim_history);
+  if (calculatedRiskRating === -1) {
+    return res.status(400).json({ error: "There is an error in the input value." });
+  } 
+  const riskData = {
+    claimhistory:claim_history,
+    riskrating: calculatedRiskRating    
+  };
+  try {   
+    const createdRisk = await Risk.create(riskData);
+    res.send({ risk_rating: calculatedRiskRating }); 
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+function calculateRiskRating(claimHistory) {
+  const keywords = ["collide", "crash", "scratch", "bump", "smash"];
+  const lowerCaseClaimHistory = claimHistory.toLowerCase();
+  let riskRating = 0;
+  keywords.forEach((keyword) => {
+    const occurrences = (lowerCaseClaimHistory.match(new RegExp(keyword, "g")) || []).length;
+    riskRating += occurrences;
+  });
+  if (riskRating === 0) {
+    return -1;
+  }
+  return riskRating;
+}
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  API 3 QUOTE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+
+const createQuote=async(req,res)=>{
+const { car_value, risk_rating } = req.body;
+console.log({ car_value, risk_rating }); 
+if (!car_value || !risk_rating || isNaN(car_value) || isNaN(risk_rating) || risk_rating < 1 || risk_rating > 5) {
+    return res.status(400).json({ error: 'Invalid input. Please provide valid car value and risk rating.' });
+  }
+
+  
+  const yearlyPremium = (car_value * risk_rating) / 100;
+  const monthlyPremium = yearlyPremium / 12;
+
+
+
+  const quoteValue={
+    carvalue:car_value,
+    riskrating:risk_rating,
+    monthlypremium:monthlyPremium,
+    yearlypremium:yearlyPremium
+  }
+  try {
+   
+    const createdQuote = await Quote.create(quoteValue);
+    res.send({monthly_premium:monthlyPremium,yearly_premium:yearlyPremium}); 
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+
+}
+
+
+
+module.exports = { getAllCars, createCar, riskRating,createQuote };
