@@ -38,6 +38,10 @@ function calculateCarValue(model, year) {
     if (typeof model !== "string" || typeof year !== "number" || isNaN(year)) {
       throw new Error("Invalid input for calculating car value");
     }
+    if (year < 0) {
+      return res.status(500).json({ error: "Year cannot be a negative number" });
+    
+    }
 
     const cleanedModel = model.replace(/[^a-zA-Z]/g, "").toUpperCase();
     const charValues = Array.from(cleanedModel).map((char) => char.charCodeAt(0) - 64);
@@ -97,36 +101,31 @@ function calculateRiskRating(claimHistory) {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  API 3 QUOTE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
 
-const createQuote=async(req,res)=>{
-const { car_value, risk_rating } = req.body;
-console.log({ car_value, risk_rating }); 
-if (!car_value || !risk_rating || isNaN(car_value) || isNaN(risk_rating) || risk_rating < 1 || risk_rating > 5) {
-    return res.status(400).json({ error: 'Invalid input. Please provide valid car value and risk rating.' });
+const createQuote = async (req, res) => {
+  const { car_value, risk_rating } = req.body;
+
+  // Validation
+  if (!car_value || !risk_rating || isNaN(car_value) || isNaN(risk_rating) || car_value < 1 || risk_rating < 1 || risk_rating > 5) {
+    return res.status(400).json({ error: 'Invalid input. Please provide valid car_value and risk_rating.' });
   }
 
-  
-  const yearlyPremium = (car_value * risk_rating) / 100;
-  const monthlyPremium = yearlyPremium / 12;
+  const yearlyPremium = Math.floor(car_value * risk_rating / 100);
+  const monthlyPremium = parseFloat((yearlyPremium / 12).toFixed(1));
 
 
 
-  const quoteValue={
-    carvalue:car_value,
-    riskrating:risk_rating,
-    monthlypremium:monthlyPremium,
-    yearlypremium:yearlyPremium
-  }
   try {
-   
-    const createdQuote = await Quote.create(quoteValue);
-    res.send({monthly_premium:monthlyPremium,yearly_premium:yearlyPremium}); 
+    
+    res.send({ monthly_premium: monthlyPremium, yearly_premium: yearlyPremium });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: 'Internal server error' });
   }
+};
 
-}
-
+  
+  
+  
 
 
 module.exports = { getAllCars, createCar, riskRating,createQuote };
