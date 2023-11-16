@@ -259,8 +259,33 @@ it("invalid risk rating value", () => {
 it("invalid car value", () => {
   const request = {
       body: {
-          car_value:"6614",
-          risk_rating:7,
+          car_value:"six",
+          risk_rating:5,
+      },
+  };
+
+  const res = {
+      send: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+  };
+
+  createQuote(request, res);
+  
+  
+    
+  expect(res.status).toHaveBeenCalledWith(400);
+  expect(res.json).toHaveBeenCalledWith({ error: 'Invalid input. Please provide valid car_value and risk_rating.' });
+
+});
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~RISK_RATING < 1~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+
+it("invalid car value", () => {
+  const request = {
+      body: {
+          car_value:6614,
+          risk_rating:0,
       },
   };
 
