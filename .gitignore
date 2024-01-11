@@ -50,3 +50,6 @@ yarn-error.log
 # OS-specific files
 .DS_Store
 Thumbs.db
+# Ignore config file
+config.js
+config/
