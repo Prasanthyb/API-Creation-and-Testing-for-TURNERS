@@ -6,7 +6,7 @@
 
 #  2 . API for RISKRATING calculation : http://localhost:4000/cars/riskrating(POST)
 
-#  3.  API for QUOTE calculation :       http://localhost:4000/cars/quote(POST)
+#  3 . API for QUOTE calculation :       http://localhost:4000/cars/quote(POST)
 
 # All the APIs are tested using JEST and SUPERTEST.
 
